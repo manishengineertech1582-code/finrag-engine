@@ -1,16 +1,8 @@
 # app/main.py
 
 from fastapi import FastAPI
-from src.pipeline import load_pipeline
+from app.routes import router
 
-app = FastAPI()
+app = FastAPI(title="FinRAG Engine")
 
-qa_chain = load_pipeline()
-
-@app.post("/ask")
-def ask_question(question: str):
-    result = qa_chain({"query": question})
-    return {
-        "answer": result["result"],
-        "sources": [doc.metadata for doc in result["source_documents"]]
-    }
+app.include_router(router)

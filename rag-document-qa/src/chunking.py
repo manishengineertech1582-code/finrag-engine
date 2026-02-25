@@ -1,10 +1,11 @@
 # src/chunking.py
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 
 def fixed_chunking(documents):
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=800,
-        chunk_overlap=150
+        chunk_overlap=150,
     )
     return splitter.split_documents(documents)

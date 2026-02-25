@@ -1,10 +1,11 @@
 name: rag
+
 channels:
   - conda-forge
   - defaults
 
 dependencies:
-  - python=3.11
+  - python=3.10
   - pip
   - numpy
   - faiss-cpu
@@ -12,9 +13,12 @@ dependencies:
   - fastapi
   - pydantic
   - pip:
-      - langchain==0.0.350
-      - langchain-community==0.0.20
-      - openai
+      - langchain>=0.1.0
+      - langchain-core>=0.1.0
+      - langchain-community>=0.0.38
+      - langchain-openai>=0.0.8
+      - langchain-text-splitters>=0.0.1
+      - openai>=1.0.0
       - pypdf
       - python-dotenv
       - mlflow
