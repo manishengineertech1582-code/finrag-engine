@@ -1,11 +1,24 @@
 # requirements.txt
-langchain>=0.1.0
+# Core LangChain for pipelines and document loaders
+langchain>=0.1.127
+
+# OpenAI API
 openai>=1.0.0
-fastapi
-uvicorn
-faiss-cpu
-numpy
-pydantic
-pypdf
-python-dotenv
-mlflow
+
+# FastAPI server
+fastapi>=0.104.0
+uvicorn>=0.23.2
+
+# FAISS vector store (CPU-only)
+faiss-cpu>=1.7.4
+
+# PDF handling
+pypdf>=3.16.0
+
+# Utilities
+numpy>=1.25.0
+pydantic>=2.7.0
+python-dotenv>=1.0.0
+
+# Optional: tracking / logging
+mlflow>=2.7.0

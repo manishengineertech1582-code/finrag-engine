@@ -4,7 +4,6 @@ from src.chunking import fixed_chunking
 from src.embeddings import create_vector_store
 
 def main():
-    # Change this to your PDF path
     pdf_path = "data/Manishfile.pdf"
 
     print("Loading PDF...")

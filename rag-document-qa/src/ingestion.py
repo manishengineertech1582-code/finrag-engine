@@ -1,6 +1,8 @@
 # src/ingestion.py
 
-from langchain_community.document_loaders import PyPDFLoader
+from langchain.document_loaders.pypdf import PyPDFLoader
+
+
 
 
 def load_pdf(file_path: str):

@@ -1,15 +1,12 @@
 # src/generator.py
-
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
-
 
 def build_qa_chain(retriever):
     llm = ChatOpenAI(
-        model="gpt-3.5-turbo",
+        model="gpt-3.5-turbo",  # cheaper than GPT-4
         temperature=0,
     )
-
 
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,

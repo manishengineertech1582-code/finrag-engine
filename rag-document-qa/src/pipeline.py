@@ -1,10 +1,8 @@
-# src/pipeline.py manish
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
-
+# src/pipeline.py
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
 from src.retriever import get_retriever
 from src.generator import build_qa_chain
-
 
 def load_pipeline():
     embeddings = OpenAIEmbeddings()
@@ -16,5 +14,4 @@ def load_pipeline():
     )
 
     retriever = get_retriever(vectorstore)
-
     return build_qa_chain(retriever)
