@@ -17,7 +17,7 @@ from src.embeddings import create_vector_store
 
 def main():
     parser = argparse.ArgumentParser(description="Build FAISS index from PDF")
-    parser.add_argument("--pdf", default="data/Manishfile.pdf", help="Path to PDF")
+    parser.add_argument("--pdf", default="data/TSLA-Q4-2025-Update.pdf", help="Path to PDF")
     parser.add_argument(
         "--strategy",
         default="recursive",

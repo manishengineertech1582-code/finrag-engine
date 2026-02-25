@@ -1,3 +1,5 @@
+# This file lists the Python dependencies for the project. You can install them using:
+# pip install -r requirements.txt
 # Core LangChain
 langchain==0.3.25
 langchain-openai==0.3.16
@@ -5,7 +7,7 @@ langchain-community==0.3.24
 langchain-text-splitters==0.3.8
 
 # Semantic chunking (optional, for SemanticChunker)
-langchain-experimental==0.0.65
+#langchain-experimental==0.0.65
 
 # LLM & embeddings
 openai==1.82.0
