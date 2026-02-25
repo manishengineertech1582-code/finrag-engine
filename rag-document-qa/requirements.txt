@@ -1,9 +1,9 @@
 fastapi
 uvicorn
-langchain
+langchain==0.0.350
+langchain-community==0.0.20
 openai
 faiss-cpu
 pypdf
 python-dotenv
 mlflow
-langchain-community
