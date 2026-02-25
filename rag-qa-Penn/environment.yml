@@ -1,0 +1,21 @@
+# environment.yml
+name: rag
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10
+  - pip
+  - numpy>=1.25.0
+  - faiss-cpu>=1.7.4
+  - uvicorn>=0.23.2
+  - fastapi>=0.104.0
+  - pydantic>=2.7.0
+  - pip:
+      - langchain>=0.1.127
+      - openai>=1.0.0
+      - pypdf>=3.16.0
+      - python-dotenv>=1.0.0
+      - mlflow>=2.7.0
