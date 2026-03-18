@@ -1,0 +1,68 @@
+# ---------------------------------------------------------
+# FinRAG Engine - Production Requirements
+# ---------------------------------------------------------
+# NOTE:
+# - All versions are pinned for reproducibility
+# - Compatible with Python 3.10
+# - Tested with LangChain 0.3.x ecosystem
+# ---------------------------------------------------------
+
+# ---------------------------
+# LangChain Ecosystem
+# ---------------------------
+langchain==0.3.25
+langchain-openai==0.3.16
+langchain-community==0.3.24
+langchain-text-splitters==0.3.8
+
+# ---------------------------
+# LLM & Tokenization
+# ---------------------------
+openai==1.82.0          # OpenAI Python SDK (v1+ API)
+tiktoken==0.9.0         # Token counting (important for cost control)
+
+# ---------------------------
+# Document Processing
+# ---------------------------
+pypdf==5.5.0            # PDF parsing
+
+# ---------------------------
+# Vector Storage & Math
+# ---------------------------
+faiss-cpu==1.10.0       # Vector similarity search
+numpy==1.26.4           # Required by FAISS
+
+# ---------------------------
+# API Layer
+# ---------------------------
+fastapi==0.115.12       # Modern FastAPI (Pydantic v2 compatible)
+uvicorn==0.34.3         # ASGI server
+
+# ---------------------------
+# Configuration Management
+# ---------------------------
+python-dotenv==1.1.0    # Environment variable loading
+
+# ---------------------------
+# Observability / Tracking
+# ---------------------------
+mlflow==2.22.1          # Experiment tracking (RAG evaluation)
+
+# ---------------------------
+# Reliability & Performance (Recommended)
+# ---------------------------
+tenacity==9.0.0         # Retry logic for API calls
+httpx==0.28.1           # Async HTTP client
+orjson==3.10.6          # Faster JSON serialization
+
+# ---------------------------
+# Testing
+# ---------------------------
+pytest==8.3.5
+
+# ---------------------------
+# Optional (Uncomment if needed)
+# ---------------------------
+# sentence-transformers==3.0.1   # For local embeddings / reranker
+# rank-bm25==0.2.2              # BM25 retrieval
+# redis==5.0.7                  # Caching layer

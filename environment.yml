@@ -1,0 +1,88 @@
+# environment.yml
+# ---------------------------------------------------------
+# Conda Environment for FinRAG Engine
+#
+# FIX LOG:
+# - BUG-11a: LangChain versions were pinned to 0.2.* but
+#   requirements.txt pins 0.3.x. The two files contradicted each
+#   other — using environment.yml would install an incompatible
+#   LangChain version and break all imports.
+#   FIX: Aligned all langchain-* versions with requirements.txt (0.3.x).
+#
+# - BUG-11b: langchain-text-splitters was completely missing.
+#   src/chunking.py imports from it. Installing langchain 0.3 does
+#   NOT automatically install langchain-text-splitters.
+#   FIX: Added langchain-text-splitters==0.3.8.
+#
+# - BUG-11c: faiss-cpu pinned to 1.7.* here vs 1.10.0 in
+#   requirements.txt. FAISS 1.7 and 1.10 have different index
+#   serialization formats — a store built with one cannot be
+#   loaded by the other.
+#   FIX: Aligned to faiss-cpu 1.10.* to match requirements.txt.
+# ---------------------------------------------------------
+
+name: rag
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # ---------------------------
+  # Core Python Version
+  # ---------------------------
+  - python=3.10
+
+  # ---------------------------
+  # System-Level Dependencies
+  # ---------------------------
+  - pip
+  - numpy=1.26.*              # pinned — FAISS requires specific numpy ABI
+
+  # FIX-11c: Aligned with requirements.txt (was 1.7.*)
+  - faiss-cpu=1.10.*
+
+  # ---------------------------
+  # API / Server Layer
+  # ---------------------------
+  - fastapi=0.115.*
+  - uvicorn=0.34.*
+
+  # ---------------------------
+  # Data Validation
+  # ---------------------------
+  - pydantic=2.*
+
+  # ---------------------------
+  # Python (pip) Dependencies
+  # ---------------------------
+  - pip:
+      # --- LangChain ecosystem ---
+      # FIX-11a: Aligned with requirements.txt (was 0.2.*)
+      - langchain==0.3.25
+      - langchain-community==0.3.24
+      - langchain-openai==0.3.16
+
+      # FIX-11b: Added missing package (was completely absent)
+      - langchain-text-splitters==0.3.8
+
+      # --- OpenAI SDK ---
+      - openai==1.82.0
+
+      # --- Document Processing ---
+      - pypdf==5.5.0
+
+      # --- Environment Management ---
+      - python-dotenv==1.1.0
+
+      # --- Experiment Tracking ---
+      - mlflow==2.22.1
+
+      # --- Reliability & Performance ---
+      - tiktoken==0.9.0
+      - tenacity==9.0.0
+      - orjson==3.10.6
+      - httpx==0.28.1
+
+      # --- Testing ---
+      - pytest==8.3.5
