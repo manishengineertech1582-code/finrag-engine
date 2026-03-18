@@ -217,19 +217,121 @@ Interactive API documentation at `http://127.0.0.1:8000/docs`
 
 ---
 
-## Chat UI Features
+## Chat UI — `static/index.html`
+
+A production-quality, single-file chat interface served directly by FastAPI at `http://127.0.0.1:8000`. Built with vanilla HTML, CSS, and JavaScript — no React, no framework, no build step required.
+
+### Design
+
+| Property | Value |
+|----------|-------|
+| Theme | Dark navy (`#0f1117` background) — Claude/ChatGPT-style |
+| Fonts | DM Sans (body) + DM Mono (code/badges) — Google Fonts |
+| Accent colour | `#5b7fff` blue with glow effects |
+| Status colour | `#34d399` green (indexed documents indicator) |
+| Sidebar width | 260px |
+| Responsive | Sidebar hidden on screens narrower than 640px |
+
+### Layout
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Sidebar (260px)      │  Main area                      │
+│  ─────────────────    │  ──────────────────────────────  │
+│  📚 FinRAG logo       │  Topbar: "FinRAG Engine"         │
+│  Document Intelligence│           [gpt-4o-mini badge]   │
+│                       │           [↺ clear button]      │
+│  [+ New conversation] │                                  │
+│                       │  Messages area (scrollable)      │
+│  RECENT               │    Welcome screen (on load)      │
+│  • Question 1         │    or                            │
+│  • Question 2         │    Chat messages                 │
+│  • ...                │                                  │
+│  (up to 12 shown)     │  Input area                      │
+│                       │    [textarea] [→ send button]    │
+│  ── Indexed Documents │    Enter to send · Shift+Enter   │
+│  • Transformer paper  │    Session cost: $0.0000         │
+│  • Hands-On LLM       │                                  │
+│  • Fundamentals of DL │                                  │
+│  • 6GHz Spectrum      │                                  │
+└───────────────────────┴─────────────────────────────────┘
+```
+
+### Features
 
 | Feature | Detail |
 |---------|--------|
-| Dark theme | Deep navy/black — Claude-style |
-| Sidebar | Conversation history + indexed document list |
-| Welcome screen | 4 clickable suggestion cards |
-| Thinking animation | Three bouncing dots while waiting |
-| Sources accordion | Click to expand retrieved PDF pages |
-| Multi-question | Type and send — no page reload needed |
-| Session cost | Live cost counter (bottom-right of input) |
-| Keyboard shortcut | `Enter` to send, `Shift+Enter` for new line |
-| New conversation | Clears chat and resets history |
+| **Welcome screen** | Shown on first load and after "New conversation". Displays a `📚` icon, tagline, and 4 clickable suggestion cards that pre-fill the input |
+| **Suggestion cards** | 4 preset questions covering all 4 indexed PDFs — Transformers, RAG, Deep Learning, Production LLMs |
+| **User avatar** | Blue/indigo gradient square showing `U` |
+| **FinRAG avatar** | Blue/purple gradient square showing `✦` |
+| **Thinking animation** | Three bouncing dots (`●●●`) displayed while waiting for the API response |
+| **Message rendering** | Answer text split on `\n\n` and rendered as paragraphs |
+| **Sources accordion** | Collapsible section below each answer showing retrieved pages. Format: `p.6  Transformer-attention-is-all-you-need-Paper.pdf` |
+| **Page numbering** | Page numbers are 1-based in the UI (stored as 0-based in metadata, +1 applied in JS) |
+| **Sidebar history** | Each question is prepended to the history list. Truncated to 34 characters with `…`. Shows up to 12 recent questions |
+| **New conversation** | Clears all message rows and restores the welcome screen. Does not reset session cost |
+| **Auto-resize input** | Textarea grows as you type up to a maximum height of 160px |
+| **Send button state** | Disabled when input is empty or while a response is pending (`isThinking = true`) |
+| **Session cost counter** | Increments by `$0.000359` per query. Displayed as `Session cost: $0.0004` in the input footer |
+| **Keyboard shortcuts** | `Enter` — send message. `Shift+Enter` — insert new line |
+| **Error handling** | If the API call fails, displays a red error message with the HTTP status or error detail |
+| **Scroll behaviour** | Message area auto-scrolls to the latest message after each response |
+| **Responsive** | On screens ≤ 640px the sidebar is hidden and suggestion cards stack in a single column |
+
+### Suggestion Cards (default)
+
+| Label | Question |
+|-------|----------|
+| **Transformers** | What is the attention mechanism in transformers? |
+| **RAG** | What is retrieval-augmented generation and when should you use it? |
+| **Deep Learning** | What is backpropagation and how does gradient descent use it? |
+| **Production LLMs** | What are the main challenges of deploying LLMs in production? |
+
+### How the UI Talks to the Backend
+
+```
+User types question → presses Enter
+        │
+        ▼
+fetch POST /api/ask
+  { "question": "..." }
+        │
+        ▼
+Response: { "answer": "...", "sources": [{source, page}, ...] }
+        │
+        ▼
+Render answer as paragraphs
+Render sources as collapsible accordion (page badge + filename)
+Increment session cost counter
+Add question to sidebar history
+```
+
+### Customising the UI
+
+To change the **indexed documents** listed in the sidebar, edit this section in `static/index.html`:
+
+```html
+<div class="doc-item">Transformer — Attention Is All You Need</div>
+<div class="doc-item">Hands-On Large Language Models</div>
+<div class="doc-item">Fundamentals of Deep Learning</div>
+<div class="doc-item">6GHz Spectrum Details</div>
+```
+
+To change the **suggestion cards**, edit the `onclick="useSuggestion('...')"` values:
+
+```html
+<div class="suggestion" onclick="useSuggestion('Your question here')">
+  <strong>Topic Label</strong>
+  Your question here
+</div>
+```
+
+To change the **cost per query** estimate, update line in the `<script>` section:
+
+```javascript
+const COST_PER_QUERY = 0.000359;  // update if switching models
+```
 
 ---
 
