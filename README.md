@@ -20,6 +20,12 @@ After starting the server, open the URL above to access the chat UI. Each answer
 
 ---
 
+## UI Screenshot
+
+![FinRAG Chat UI](docs/ui-screenshot.png)
+
+*FinRAG Engine — Claude-style dark chat interface with sidebar, suggestion cards, and indexed document panel.*
+
 ## Architecture
 
 ```
