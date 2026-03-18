@@ -2,15 +2,7 @@
 """
 RAG Pipeline Loader
 
-FIX LOG:
-- BUG-12: Added load_dotenv() for standalone use.
-- BUG-16: pipeline.py used OpenAIEmbeddings() with no model specified,
-  defaulting to text-embedding-ada-002. But create_index.py uses
-  EmbeddingConfig which defaults to text-embedding-3-small.
-  Loading a FAISS index built with model A using model B produces
-  completely wrong similarity scores — retrieved chunks are irrelevant
-  or garbage. This is why answers were wrong even after fixing the pkl.
-  FIX: Use the same model name in both places: text-embedding-3-small.
+
 """
 
 from typing import Optional

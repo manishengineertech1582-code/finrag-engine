@@ -2,15 +2,60 @@
 
 """
 Main Application Entry Point
+==============================
+Purpose:
+    Creates and configures the FastAPI application that powers the
+    FinRAG Engine. Wires together the API routes, the chat UI, logging,
+    and environment variable loading into a single deployable ASGI app.
+
+How to Run:
+    # Development (with auto-reload)
+    uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+    # Production
+    uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+Endpoints Registered:
+    POST /api/ask     — RAG question answering (via app/routes.py)
+    GET  /health      — Health check for load balancers / monitoring
+    GET  /            — Chat UI (served from static/index.html)
+    GET  /docs        — Swagger UI for API testing (FastAPI built-in)
+
+Request Flow:
+    Browser → GET  /          → static/index.html  (chat UI)
+    Browser → POST /api/ask   → app/routes.py      (RAG pipeline)
+                              → src/pipeline.py    (FAISS + LLM)
+                              → OpenAI API         (answer)
+                              → browser            (displayed in UI)
+
+Static File Serving:
+    The chat UI (static/index.html) is mounted at "/" using FastAPI's
+    StaticFiles. It MUST be mounted LAST after all API routes — if
+    mounted first, it intercepts all requests including /api/ask.
+
+Application Factory Pattern:
+    create_app() builds and returns the FastAPI instance. This pattern
+    allows the app to be imported cleanly in tests without side effects,
+    and makes it easy to create multiple configured instances.
+
+Lifespan Context Manager:
+    Handles startup and shutdown events using the modern asynccontextmanager
+    pattern (replaces deprecated @app.on_event("startup") decorators).
+    Currently logs startup/shutdown — extend here to pre-load the pipeline
+    at startup rather than on first request.
+
+Environment Variables Required:
+    OPENAI_API_KEY   — loaded from .env via load_dotenv() at module top
+    OPENAI_MODEL     — optional, defaults to gpt-4o-mini (in generator.py)
+    VECTORSTORE_PATH — optional, defaults to "vector_store" (in pipeline.py)
 
 FIX LOG:
-- BUG-6: No logging configuration and no dotenv loading.
-  Without `load_dotenv()`, OPENAI_API_KEY is never read from .env
-  when running locally, causing every pipeline call to fail with
-  an authentication error.
-
-  FIX: Added `load_dotenv()` call at module startup and a
-  `logging.basicConfig()` so all module-level loggers produce output.
+    BUG-6: load_dotenv() was missing. Without it, OPENAI_API_KEY was never
+           read from .env when running locally, causing authentication errors
+           on every pipeline call. Fixed by calling load_dotenv() at the top
+           of this file before any module that needs the API key is imported.
+           Also added logging.basicConfig() so all src.* loggers produce
+           visible timestamped output in the terminal.
 """
 
 import logging
@@ -18,7 +63,7 @@ from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles          
+from fastapi.staticfiles import StaticFiles
 
 from app.routes import router
 
@@ -71,8 +116,8 @@ def create_app() -> FastAPI:
         """Health check endpoint for load balancers and monitoring."""
         return {"status": "ok"}
 
-    # Serve the chat UI — must be LAST so API routes take priority  
-    app.mount("/", StaticFiles(directory="static", html=True), name="static") 
+    # Serve the chat UI — must be LAST so API routes take priority
+    app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
     return app
 

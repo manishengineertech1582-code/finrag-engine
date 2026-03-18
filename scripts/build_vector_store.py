@@ -4,16 +4,6 @@
 Vector Store Builder Script
 
 Standalone utility to build or rebuild the FAISS vector store.
-
-FIX LOG:
-- BUG-3: `from langchain.docstore.document import Document` — this import
-  path was removed in LangChain 0.2+. The correct import is:
-  `from langchain_core.documents import Document`
-
-- BUG-4: `from src.embeddings import ... FAISS` — FAISS is not exported
-  from src/embeddings.py. It is an internal import there. Importing it
-  from embeddings caused an ImportError. Fixed by importing FAISS directly
-  from langchain_community.vectorstores where it is actually defined.
 """
 
 import os

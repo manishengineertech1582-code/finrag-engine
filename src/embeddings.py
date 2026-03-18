@@ -1,4 +1,35 @@
 # src/embeddings.py
+"""
+Embeddings & Vector Store Module
+=================================
+Purpose:
+    Converts text documents into numerical vector embeddings using OpenAI's
+    text-embedding-3-small model and stores them in a local FAISS vector
+    database for fast similarity search during RAG retrieval.
+
+Usage:
+    # Build and save the vector store from a list of LangChain Documents:
+    from src.embeddings import create_vector_store, EmbeddingConfig
+    config = EmbeddingConfig(model="text-embedding-3-small", persist_path="vector_store")
+    create_vector_store(docs, config)
+
+    # Load an existing vector store from disk:
+    from src.embeddings import load_vector_store
+    vectorstore = load_vector_store(persist_path="vector_store")
+
+Called by:
+    create_index.py  — builds the index from PDFs at startup
+
+Environment Variables Required:
+    OPENAI_API_KEY   — must be set in .env before calling any function
+
+Key Fix (BUG-15):
+    Uses a single FAISS.from_documents() call instead of a batching loop.
+    The old add_documents() loop caused a Python pickle memo-optimization
+    bug where only 1 of 2,485 documents retained its page_content,
+    making the LLM always respond "not available".
+"""
+
 import os
 import logging
 from typing import List, Optional

@@ -2,14 +2,56 @@
 
 """
 RAG Generator Module
+=====================
+Purpose:
+    Builds the LLM-powered question-answering chain that takes retrieved
+    document chunks and generates a coherent, grounded answer using
+    OpenAI's gpt-4o-mini model. This is the final "generation" step
+    in the Retrieve → Generate RAG pipeline.
+
+How It Works:
+    1. Retrieved chunks from FAISS are injected into the system prompt
+       as {context} passages.
+    2. The user's question is passed as {input}.
+    3. gpt-4o-mini reads the context and generates a grounded answer.
+    4. If no relevant context exists, the model says so explicitly.
+
+Key Components:
+    - SYSTEM_PROMPT   : Instructs the LLM to answer strictly from context,
+                        handle multi-part questions with separate headings,
+                        and never hallucinate outside the provided passages.
+    - PROMPT          : ChatPromptTemplate wiring system + human messages.
+    - build_qa_chain(): Assembles the full retrieval chain using the
+                        LangChain 0.3+ API (create_retrieval_chain +
+                        create_stuff_documents_chain).
+    - run_query()     : Executes a query against a built chain.
+
+Usage:
+    from src.generator import build_qa_chain, run_query
+
+    # Build the chain (called once at startup via pipeline.py)
+    qa_chain = build_qa_chain(retriever=retriever, model="gpt-4o-mini")
+
+    # Run a query
+    result = run_query(qa_chain, "What is the attention mechanism?")
+    print(result["answer"])   # LLM answer
+    print(result["context"])  # List of retrieved Document objects
+
+Called by:
+    src/pipeline.py   — at startup to assemble the full RAG pipeline
+    app/routes.py     — indirectly via the pipeline singleton
+
+Environment Variables:
+    OPENAI_API_KEY    — required for ChatOpenAI authentication
+    OPENAI_MODEL      — optional override (defaults to gpt-4o-mini)
 
 FIX LOG:
-- BUG-1:  Removed deprecated get_relevant_documents check.
-- BUG-13: Replaced deprecated RetrievalQA with create_retrieval_chain.
-- BUG-19: Prompt updated to explicitly handle multi-part questions.
-          Previous prompt did not instruct the model to answer EACH
-          part of a compound question separately. Added instruction to
-          identify and answer each sub-question individually.
+    BUG-13: Replaced deprecated RetrievalQA with create_retrieval_chain
+            (LangChain 0.3+ standard). Old chain silently dropped context
+            causing "I don't know" even when relevant chunks were retrieved.
+    BUG-19: Prompt updated to handle multi-part questions. Added rule to
+            answer EACH part separately with a clear heading, preventing
+            the LLM from answering only the first part of compound queries.
 """
 
 from typing import Any, Optional

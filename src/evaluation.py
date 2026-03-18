@@ -1,25 +1,42 @@
 # src/evaluation.py
 
 """
-Evaluation metrics for retrieval systems.
+Evaluation Metrics Module
+==========================
+Purpose:
+    Measures the quality of the RAG retrieval system by computing standard
+    Information Retrieval (IR) metrics. Tells you how well the FAISS vector
+    store is finding the right document chunks for a given query.
 
-This module provides standard IR (Information Retrieval) metrics:
-- Hit@K
-- Mean Reciprocal Rank (MRR)
+Metrics Provided:
+    - Hit@K           : Did the correct document appear in the top-K results?
+                        Returns 1 (found) or 0 (not found).
+    - MRR (Mean       : How highly was the correct document ranked?
+      Reciprocal Rank)  Score = 1/rank. Rank 1 = 1.0, Rank 2 = 0.5, etc.
 
-FIX LOG:
-- BUG-2: `_extract_doc_id` looked up `doc.metadata.get("id")`.
-  PyPDFLoader NEVER sets an "id" key — it only sets "source" (file path)
-  and "page" (0-based page number). This meant Hit@K and MRR always
-  returned 0, making the entire evaluation module silently broken.
+Usage:
+    from src.evaluation import hit_at_k, mean_reciprocal_rank
 
-  FIX: Changed the primary key to "page" (what PyPDFLoader actually sets),
-  with a fallback to "source" and then the old "id" key for backward
-  compatibility with custom loaders that do set "id".
+    # Check if correct chunk was retrieved in top-5 results
+    hit = hit_at_k(retrieved_docs, ground_truth_doc_id=42)
 
-  The chunking module already sets "chunk_id" on each chunk. Evaluation
-  functions now also accept "chunk_id" as a valid identifier, so tests
-  using chunk_id-based ground truth work correctly.
+    # Check how highly the correct chunk was ranked
+    mrr = mean_reciprocal_rank(retrieved_docs, ground_truth_doc_id=42)
+
+    # ground_truth_doc_id can be any of:
+    #   - chunk_id  (set by src/chunking.py)
+    #   - page      (set by PyPDFLoader, 0-based)
+    #   - source    (file path)
+    #   - id        (custom loader field)
+
+Called by:
+    tests/test_evaluation.py  — unit tests for retrieval quality
+
+Document ID Resolution (priority order):
+    1. "id"       — explicitly set by custom loaders
+    2. "chunk_id" — set by src/chunking.py fixed_chunking()
+    3. "page"     — set by PyPDFLoader (0-based page index)
+    4. "source"   — file path fallback
 """
 
 from typing import List, Optional, Any

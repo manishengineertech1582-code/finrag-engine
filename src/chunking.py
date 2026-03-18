@@ -1,16 +1,56 @@
 # src/chunking.py
 
 """
-This module is responsible for splitting large documents into smaller chunks
-optimized for:
-- LLM context windows
-- Embedding quality
-- Retrieval accuracy (RAG systems)
+Document Chunking Module
+=========================
+Purpose:
+    Splits large PDF pages (loaded by src/ingestion.py) into smaller,
+    overlapping text chunks optimised for embedding quality and retrieval
+    accuracy in the RAG pipeline. This is the second step in the
+    ingestion pipeline, sitting between document loading and embedding.
 
-Key Responsibilities:
-1. Split documents into manageable chunks
-2. Preserve metadata for traceability
-3. Optimize chunk size vs overlap trade-off
+Pipeline Position:
+    PDF files → src/ingestion.py → [src/chunking.py] → src/embeddings.py
+
+Why Chunking is Necessary:
+    - LLMs have a limited context window (token limit)
+    - Embedding models produce better vectors for focused, short text
+      than for entire PDF pages
+    - Smaller chunks improve retrieval precision — FAISS can pinpoint
+      the exact passage that answers the question rather than returning
+      an entire page
+
+Chunking Strategy:
+    Uses RecursiveCharacterTextSplitter which splits text in this order:
+        Paragraphs → Sentences → Words → Characters
+    This preserves semantic boundaries better than naive fixed-size splits.
+
+Default Settings:
+    CHUNK_SIZE    = 800 characters  — balances context and focus
+    CHUNK_OVERLAP = 150 characters  — ensures sentences split across
+                                      chunk boundaries are not lost
+
+Metadata Preserved:
+    Each chunk retains the original document's metadata (source file,
+    page number) and adds a unique chunk_id for traceability.
+    chunk_id is used by src/evaluation.py for retrieval quality testing.
+
+Usage:
+    from src.chunking import fixed_chunking
+
+    # Called by create_index.py after loading PDFs
+    chunks = fixed_chunking(documents)
+
+    # Optional: custom chunk size and overlap
+    chunks = fixed_chunking(documents, chunk_size=500, chunk_overlap=100)
+
+Called by:
+    create_index.py  — as part of the full PDF → vector store pipeline
+
+Key Functions:
+    validate_documents() — checks documents are non-empty and valid
+    create_splitter()    — factory that builds the text splitter
+    fixed_chunking()     — main entry point, returns List[Document]
 """
 
 import logging

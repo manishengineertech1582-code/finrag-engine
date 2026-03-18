@@ -1,164 +1,346 @@
 # FinRAG Engine
 
-**Production-ready Retrieval-Augmented Generation (RAG) system** for answering questions over PDF documents using LLMs, vector search, and modern backend infrastructure.
+**Production-grade Retrieval-Augmented Generation (RAG) system** for intelligent question answering over PDF documents. Built with FastAPI, LangChain 0.3+, FAISS, and OpenAI — served through a Claude-style dark chat UI.
 
 ---
 
-## Overview
+## What It Does
 
-FinRAG Engine enables intelligent question answering over unstructured documents by combining:
-
-- Document ingestion & chunking
-- Vector embeddings & similarity search
-- Retrieval optimization (Hybrid + Reranking)
-- LLM-based answer generation
-- Evaluation metrics for retrieval quality
+FinRAG lets you chat with your PDF documents. Drop any PDF into the `data/` folder, run the indexing script, and ask questions in natural language through a browser-based chat interface. The system retrieves the most relevant passages from your documents and uses an LLM to generate a grounded, sourced answer.
 
 ---
 
-## Key Features
+## Live Demo
 
-- PDF ingestion using PyPDFLoader  
-- Multiple chunking strategies (fixed, recursive, semantic)  
-- OpenAI embeddings  
-- FAISS vector database for fast retrieval  
-- Dense + BM25 + Hybrid (RRF) retrieval  
-- Cross-encoder reranking (MiniLM)  
-- LLM-powered answers (GPT-based)  
-- Evaluation metrics (Hit@K, MRR)  
-- FastAPI-based REST API  
-- Dockerized deployment  
-- CI/CD pipeline (GitHub Actions)  
+```
+http://127.0.0.1:8000
+```
+
+After starting the server, open the URL above to access the chat UI. Each answer shows which PDF pages were used as sources.
 
 ---
 
 ## Architecture
-            ┌──────────────┐
-            │   PDF Docs   │
-            └──────┬───────┘
-                   ↓
-           ┌──────────────┐
-           │  Chunking    │
-           └──────┬───────┘
-                   ↓
-           ┌──────────────┐
-           │ Embeddings   │
-           └──────┬───────┘
-                   ↓
-           ┌──────────────┐
-           │   FAISS DB   │
-           └──────┬───────┘
-                   ↓
-           ┌──────────────┐
-           │  Retriever   │
-           └──────┬───────┘
-                   ↓
-           ┌──────────────┐
-           │  Reranker    │
-           └──────┬───────┘
-                   ↓
-           ┌──────────────┐
-           │     LLM      │
-           └──────┬───────┘
-                   ↓
-           ┌──────────────┐
-           │ Answer + Src │
-           └──────────────┘
+
+```
+PDF files (data/)
+      │
+      ▼
+src/ingestion.py        — PyPDFLoader reads each PDF page into Documents
+      │
+      ▼
+src/chunking.py         — RecursiveCharacterTextSplitter (800 chars, 150 overlap)
+      │
+      ▼
+src/embeddings.py       — OpenAI text-embedding-3-small → FAISS index
+      │
+      ▼
+vector_store/           — FAISS index saved to disk (index.faiss + index.pkl)
+      │
+      ▼
+src/retriever.py        — MultiQueryRetriever (k=8, LLM decomposes compound questions)
+      │
+      ▼
+src/generator.py        — create_retrieval_chain + gpt-4o-mini → grounded answer
+      │
+      ▼
+app/routes.py           — POST /api/ask  →  {"answer": ..., "sources": [...]}
+      │
+      ▼
+static/index.html       — Claude-style dark chat UI in the browser
+```
 
 ---
 
 ## Repository Structure
-finrag-engine/
-├── app/
-│ ├── main.py # FastAPI app factory
-│ └── routes.py # API endpoints
-├── src/
-│ ├── ingestion.py # PDF loading
-│ ├── chunking.py # Chunking strategies
-│ ├── embeddings.py # Embeddings + FAISS
-│ ├── retriever.py # Retrieval logic
-│ ├── reranker.py # Cross-encoder reranker
-│ ├── generator.py # LLM QA chain
-│ ├── pipeline.py # End-to-end pipeline
-│ └── evaluation.py # Metrics (Hit@K, MRR)
-├── tests/ # Unit & integration tests
-├── data/ # Input PDFs
-├── vector_store/ # FAISS index
-├── Dockerfile
-├── requirements.txt
-├── environment.yml
-└── .env
 
+```
+finrag-engine/
+│
+├── app/
+│   ├── main.py             # FastAPI app factory — mounts routes + static UI
+│   └── routes.py           # POST /api/ask endpoint + pipeline singleton
+│
+├── src/
+│   ├── ingestion.py        # PDF loading via PyPDFLoader
+│   ├── chunking.py         # Document chunking (800 chars / 150 overlap)
+│   ├── embeddings.py       # OpenAI embeddings + FAISS vector store
+│   ├── retriever.py        # MultiQueryRetriever (k=8) for compound questions
+│   ├── generator.py        # LLM QA chain (create_retrieval_chain)
+│   ├── pipeline.py         # End-to-end pipeline loader (called at startup)
+│   └── evaluation.py       # Hit@K and MRR retrieval quality metrics
+│
+├── static/
+│   └── index.html          # Claude-style dark chat UI (vanilla JS, no framework)
+│
+├── tests/
+│   └── test_evaluation.py  # Unit tests for Hit@K and MRR metrics
+│
+├── scripts/
+│   └── build_vector_store.py
+│
+├── data/                   # Drop your PDF files here (not committed to git)
+├── vector_store/           # FAISS index (auto-generated, not committed to git)
+│
+├── create_index.py         # Run this to build/rebuild the vector store
+├── Dockerfile              # Production Docker image (non-root, healthcheck)
+├── requirements.txt        # Pinned Python dependencies (Python 3.10)
+├── environment.yml         # Conda environment definition
+└── .env                    # API keys — never committed (listed in .gitignore)
+```
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| LLM | OpenAI `gpt-4o-mini` |
+| Embeddings | OpenAI `text-embedding-3-small` |
+| Vector DB | FAISS (local, CPU) |
+| Retriever | LangChain `MultiQueryRetriever` (k=8) |
+| Chain | LangChain 0.3+ `create_retrieval_chain` |
+| API | FastAPI 0.115 + Uvicorn |
+| Chat UI | Vanilla HTML/CSS/JS (Claude-style dark theme) |
+| PDF Parsing | PyPDF via LangChain `PyPDFLoader` |
+| Python | 3.10 |
 
 ---
 
 ## Setup & Installation
 
-### 1️⃣ Clone Repository
+### 1 — Clone the repository
+
 ```bash
-git clone https://github.com/your-repo/finrag-engine.git
+git clone https://github.com/manishengineertech1582-code/finrag-engine.git
 cd finrag-engine
+```
 
-2️⃣ Create Environment
-Option A: pip
-pip install -r requirements.txt
-Option B: conda
+### 2 — Create the conda environment
+
+```bash
 conda env create -f environment.yml
-conda activate rag
+conda activate finrag
+```
 
-3️⃣ Set Environment Variables
+Or using pip:
 
-Create .env file:
-OPENAI_API_KEY=your_api_key_here
+```bash
+pip install -r requirements.txt
+```
+
+### 3 — Configure environment variables
+
+Create a `.env` file in the project root:
+
+```
+OPENAI_API_KEY=sk-your-openai-api-key-here
 VECTORSTORE_PATH=vector_store
+OPENAI_MODEL=gpt-4o-mini
+```
 
-▶️ Running the Application
-Local Development
-uvicorn app.main:app --reload
-Production (Recommended)
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+> **Never commit `.env` to git.** It is listed in `.gitignore`.
 
-🐳 Docker Deployment
-Build Image
-docker build -t finrag-engine .
-Run Container
-docker run -p 8000:8000 \
-  -e OPENAI_API_KEY=your_key \
-  -v $(pwd)/vector_store:/app/vector_store \
-  finrag-engine
-🔌 API Endpoints
+### 4 — Add your PDF files
 
-🔍 Ask Question
-POST /api/ask
+Copy your PDF documents into the `data/` folder:
 
-Request
+```
+data/
+├── your-document-1.pdf
+├── your-document-2.pdf
+└── your-document-3.pdf
+```
 
+### 5 — Build the vector store
+
+```bash
+python create_index.py
+```
+
+This reads all PDFs from `data/`, chunks them, embeds them using `text-embedding-3-small`, and saves the FAISS index to `vector_store/`.
+
+Expected output:
+```
+INFO - Found 4 PDF file(s).
+INFO - Generated 2485 chunks
+INFO - Embedding 2485 documents with model 'text-embedding-3-small'...
+INFO - Vector store created. 2485 documents indexed.
+INFO - Indexing pipeline completed successfully.
+```
+
+### 6 — Start the server
+
+```bash
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+### 7 — Open the chat UI
+
+```
+http://127.0.0.1:8000
+```
+
+---
+
+## API Reference
+
+### POST `/api/ask` — Ask a question
+
+**Request:**
+```json
 {
-  "question": "What is this document about?"
+  "question": "What is the attention mechanism in transformers?"
 }
+```
 
-Response
-
+**Response:**
+```json
 {
-  "answer": "This document explains...",
+  "answer": "The attention mechanism in transformers...",
   "sources": [
-    {"page": 1, "source": "file.pdf"}
+    {"source": "data/Transformer-attention-is-all-you-need-Paper.pdf", "page": 6},
+    {"source": "data/Hands-On-LLM.pdf", "page": 255}
   ]
 }
-Health Check
-GET /health
-Evaluation
-POST /api/evaluate
-Running Tests
+```
+
+### GET `/health` — Health check
+
+```json
+{"status": "ok"}
+```
+
+### GET `/docs` — Swagger UI
+
+Interactive API documentation at `http://127.0.0.1:8000/docs`
+
+---
+
+## Chat UI Features
+
+| Feature | Detail |
+|---------|--------|
+| Dark theme | Deep navy/black — Claude-style |
+| Sidebar | Conversation history + indexed document list |
+| Welcome screen | 4 clickable suggestion cards |
+| Thinking animation | Three bouncing dots while waiting |
+| Sources accordion | Click to expand retrieved PDF pages |
+| Multi-question | Type and send — no page reload needed |
+| Session cost | Live cost counter (bottom-right of input) |
+| Keyboard shortcut | `Enter` to send, `Shift+Enter` for new line |
+| New conversation | Clears chat and resets history |
+
+---
+
+## Running Tests
+
+```bash
 pytest tests/
+```
 
-valuation Metrics
-Metric	Description
-Hit@K	Checks if correct doc is retrieved
-MRR	Measures ranking quality
+Tests cover Hit@K and MRR retrieval metrics in `tests/test_evaluation.py`.
 
-Security Best Practices
-Never commit .env files
-Use environment variables for secrets
-Run container as non-root user
-Avoid logging API keys
+---
+
+## Docker Deployment
+
+**Build the image:**
+```bash
+docker build -t finrag-engine .
+```
+
+**Run the container:**
+```bash
+docker run -p 8000:8000 \
+  -e OPENAI_API_KEY=your_key_here \
+  -v $(pwd)/vector_store:/app/vector_store \
+  -v $(pwd)/data:/app/data \
+  finrag-engine
+```
+
+The container runs as a non-root user and exposes a health check at `/health`.
+
+---
+
+## Evaluation Metrics
+
+| Metric | Description |
+|--------|-------------|
+| Hit@K | 1 if the correct document appears in the top-K retrieved results, else 0 |
+| MRR | 1 / rank of the first correct document. Rank 1 = 1.0, Rank 2 = 0.5, etc. |
+
+Run evaluation:
+```python
+from src.evaluation import hit_at_k, mean_reciprocal_rank
+
+hit  = hit_at_k(retrieved_docs, ground_truth_doc_id=5)
+mrr  = mean_reciprocal_rank(retrieved_docs, ground_truth_doc_id=5)
+```
+
+---
+
+## Configuration Reference
+
+| Variable | Location | Default | Description |
+|----------|----------|---------|-------------|
+| `OPENAI_API_KEY` | `.env` | — | Required. Your OpenAI API key |
+| `OPENAI_MODEL` | `.env` | `gpt-4o-mini` | LLM used for answer generation |
+| `VECTORSTORE_PATH` | `.env` | `vector_store` | Path to FAISS index directory |
+| `DEFAULT_CHUNK_SIZE` | `src/chunking.py` | `800` | Characters per chunk |
+| `DEFAULT_CHUNK_OVERLAP` | `src/chunking.py` | `150` | Overlap between chunks |
+| `DEFAULT_TOP_K` | `src/retriever.py` | `8` | Chunks retrieved per sub-query |
+| `EMBEDDING_MODEL` | `src/pipeline.py` | `text-embedding-3-small` | Must match model used at index time |
+
+---
+
+## Cost Estimates
+
+Using `gpt-4o-mini` and `text-embedding-3-small`:
+
+| Operation | Cost |
+|-----------|------|
+| Index 2,485 chunks (one-time) | ~$0.01 |
+| Per query | ~$0.000359 |
+| 1,000 queries | ~$0.36 |
+
+---
+
+## Security
+
+- `.env` is listed in `.gitignore` — API key is never committed
+- `vector_store/` is listed in `.gitignore` — binary index not committed
+- `data/*.pdf` is listed in `.gitignore` — PDFs not committed
+- Docker container runs as non-root user (`appuser`, UID 1001)
+- No API keys logged at any log level
+
+---
+
+## Known Limitations
+
+- Vector store must be rebuilt locally after cloning (not committed to git)
+- FAISS is local/CPU only — not distributed
+- No conversation memory — each question is answered independently
+- PDF text extraction may fail on scanned/image-based PDFs
+
+---
+
+## Rebuilding the Vector Store
+
+If you add new PDFs or change chunking settings, delete the old index and rebuild:
+
+```bash
+# Windows (PowerShell)
+Remove-Item -Recurse -Force vector_store
+python create_index.py
+
+# Mac/Linux
+rm -rf vector_store/
+python create_index.py
+```
+
+---
+
+## License
+
+MIT License — see `LICENSE` for details.

@@ -2,23 +2,6 @@
 # ---------------------------------------------------------
 # Conda Environment for FinRAG Engine
 #
-# FIX LOG:
-# - BUG-11a: LangChain versions were pinned to 0.2.* but
-#   requirements.txt pins 0.3.x. The two files contradicted each
-#   other — using environment.yml would install an incompatible
-#   LangChain version and break all imports.
-#   FIX: Aligned all langchain-* versions with requirements.txt (0.3.x).
-#
-# - BUG-11b: langchain-text-splitters was completely missing.
-#   src/chunking.py imports from it. Installing langchain 0.3 does
-#   NOT automatically install langchain-text-splitters.
-#   FIX: Added langchain-text-splitters==0.3.8.
-#
-# - BUG-11c: faiss-cpu pinned to 1.7.* here vs 1.10.0 in
-#   requirements.txt. FAISS 1.7 and 1.10 have different index
-#   serialization formats — a store built with one cannot be
-#   loaded by the other.
-#   FIX: Aligned to faiss-cpu 1.10.* to match requirements.txt.
 # ---------------------------------------------------------
 
 name: rag

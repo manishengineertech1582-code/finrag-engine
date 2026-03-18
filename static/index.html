@@ -1,3 +1,22 @@
+<!--
+  static/index.html
+  ==================
+  Purpose : Claude/ChatGPT-style dark chat UI for FinRAG Engine.
+  Served  : FastAPI StaticFiles mount at "/" (configured in app/main.py)
+  Talks to: POST /api/ask  (app/routes.py)
+
+  Features:
+    - Sidebar with conversation history and indexed document list
+    - Welcome screen with 4 clickable suggestion cards
+    - Thinking animation (3 bouncing dots) while awaiting response
+    - Sources accordion showing which PDF pages were retrieved
+    - Auto-resizing textarea (Enter to send, Shift+Enter for new line)
+    - Live session cost counter (bottom right of input box)
+    - New conversation button to reset the chat
+
+  Fonts   : DM Sans + DM Mono (Google Fonts)
+  No external JS frameworks — pure vanilla HTML/CSS/JavaScript
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>

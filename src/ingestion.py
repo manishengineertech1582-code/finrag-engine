@@ -2,12 +2,57 @@
 
 """
 Document Ingestion Module
+==========================
+Purpose:
+    Loads PDF files from disk and converts them into LangChain Document
+    objects ready for chunking and embedding. This is the first step in
+    the RAG pipeline — raw PDF files go in, structured Document objects
+    come out.
 
-This module handles loading documents from various sources.
-Currently supports:
-- PDF ingestion via PyPDFLoader
+Pipeline Position:
+    PDF files → [src/ingestion.py] → src/chunking.py → src/embeddings.py
 
-Designed to be extensible for additional sources (e.g., DOCX, HTML, APIs).
+How It Works:
+    Uses LangChain's PyPDFLoader which reads each page of a PDF and
+    creates one Document object per page. Each Document contains:
+        - page_content : extracted text from that page
+        - metadata     : {"source": "path/to/file.pdf", "page": 0}
+
+    The "source" and "page" metadata fields are used downstream by:
+        - src/evaluation.py  — for retrieval quality scoring
+        - app/routes.py      — to show users which pages were retrieved
+        - static/index.html  — to display source citations in the chat UI
+
+Supported Sources:
+    - PDF files via PyPDFLoader (current)
+    - Extensible for DOCX, HTML, web APIs (future)
+
+Usage:
+    from src.ingestion import load_pdf, load_multiple_pdfs
+
+    # Load a single PDF
+    docs = load_pdf("data/Transformer-attention-is-all-you-need-Paper.pdf")
+
+    # Load all PDFs at once
+    docs = load_multiple_pdfs([
+        "data/6ghz-details.pdf",
+        "data/Hands-On-LLM.pdf",
+        "data/Fundamentals of Deep Learning.pdf",
+        "data/Transformer-attention-is-all-you-need-Paper.pdf",
+    ])
+
+Called by:
+    create_index.py  — loads all PDFs before chunking and indexing
+
+Key Functions:
+    load_pdf()           — loads a single PDF, returns List[Document]
+    load_multiple_pdfs() — loads many PDFs, skips failed files gracefully
+
+Error Handling:
+    - Invalid path      → ValueError
+    - File not found    → FileNotFoundError
+    - Corrupt/unreadable PDF → RuntimeError (file is skipped in batch mode)
+    - Non-PDF extension → logged as warning but still attempted
 """
 
 from typing import List

@@ -3,18 +3,7 @@
 """
 Retriever Module
 
-FIX LOG:
-- BUG-17: DEFAULT_TOP_K was 5. For compound questions spanning multiple
-  documents or topics (e.g. "What is X AND what is Y?"), 5 chunks are
-  often all retrieved from the dominant topic, leaving the second topic
-  with zero coverage. Increased to 8 for better multi-topic coverage.
 
-- BUG-18: Single-query retrieval fails for compound questions. Added
-  MultiQueryRetriever support which uses the LLM to decompose a complex
-  question into sub-queries, retrieves for each separately, then merges
-  and deduplicates the results. This means a question about both 6GHz
-  spectrum AND deep learning will retrieve relevant chunks from BOTH
-  topics instead of just the dominant one.
 """
 
 from typing import Any, Dict, Optional, Protocol

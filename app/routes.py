@@ -2,13 +2,63 @@
 
 """
 API Routes Module
+==================
+Purpose:
+    Defines the FastAPI HTTP endpoints that the chat UI and external
+    clients call to ask questions. Receives a question, passes it
+    through the RAG pipeline, and returns the LLM answer along with
+    the source document references.
+
+Pipeline Position:
+    Browser/Client → [app/routes.py] → src/pipeline.py → FAISS → LLM → Response
+
+Endpoints:
+    POST /api/ask
+        Request  : {"question": "What is the attention mechanism?"}
+        Response : {"answer": "...", "sources": [{"source": "file.pdf", "page": 5}, ...]}
+
+        - Passes the question to the RAG chain
+        - Returns the LLM-generated answer
+        - Returns metadata of retrieved source chunks (file + page number)
+        - Displayed in the chat UI as collapsible "X sources retrieved"
+
+Pipeline Singleton Pattern:
+    The QA pipeline (FAISS + retriever + LLM chain) is expensive to
+    initialise — it loads the vector store and connects to OpenAI.
+    get_pipeline() builds it once on the first request and reuses the
+    same instance for all subsequent requests via a module-level
+    _qa_pipeline variable. This avoids reloading the vector store on
+    every API call.
+
+Error Handling:
+    503 — Vector store not found (run python create_index.py first)
+    503 — Pipeline failed to initialise (check server logs)
+    400 — Empty question submitted
+    500 — Unexpected error during query execution
+
+Usage:
+    This module is registered in app/main.py via:
+        app.include_router(router)
+
+    The endpoint is then available at:
+        POST http://127.0.0.1:8000/api/ask
+
+    Test via Swagger UI:
+        http://127.0.0.1:8000/docs
+
+Called by:
+    static/index.html  — chat UI sends POST /api/ask on every question
+    app/main.py        — registers this router at startup
 
 FIX LOG:
-- BUG-7: Unhandled RuntimeError on pipeline load -> now returns HTTP 503.
-- BUG-8: Cleaner module-level singleton pattern.
-- BUG-14: create_retrieval_chain (new API) returns {"answer": ..., "context": [...]}
-  instead of the old RetrievalQA {"result": ..., "source_documents": [...]}.
-  Updated result extraction keys to match the new response schema.
+    BUG-7:  Unhandled RuntimeError on pipeline load now returns HTTP 503
+            with a helpful message instead of crashing the server.
+    BUG-8:  Replaced complex hasattr singleton check with a clean
+            module-level _qa_pipeline = None pattern.
+    BUG-14: Updated invoke key from {"query": ...} to {"input": ...}
+            and response keys from "result"/"source_documents" to
+            "answer"/"context" to match the new create_retrieval_chain
+            API in LangChain 0.3+.
 """
 
 from typing import Any, List
